@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang "en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width-device width, initial scale=1.0" />
+        <title> SNAKE GAME </title>
+        <style>
+            body {
+                background: #365784;
+                text-align: center;
+            }
+            canvas {
+                border: 5px solid #1E8449;
+            }
+            h1 {
+                color: #80DC67;
+            }
+            h2 {
+                color: #D10B0B;
+                -webkit-text-stroke: 1px #8D0000;
+                font-size: 50px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1> Let´s eat! </h1>
+        <canvas width="700" height="700"></canvas>
+        <h2>0</h2>
+        
+        <script>
+            // listeners
+            document.addEventListener("keydown", keyPush);
+
+            // canvas
+            const canvas = document.querySelector("canvas");
+            const title = document.querySelector("h2");
+            const ctx = canvas.getContext("2d");
+                        
+            const tileSize = 50;
+            const tileX = canvas.width / tileSize;
+            const tileY = canvas.height / tileSize;
+
+            // apple
+            let appleX = 0;
+            let appleY = canvas.height;
+            let appleRad = 0;
+
+            //player
+            let snake = 1;
+            let snakeX = 0;
+            let snakeY = canvas.height/2;
+            let tail = [];
+            
+            let speed = tileSize; //rýchlosť hadíka musí byť rovnaká ako je veľkosť kachličky, aby zapadol do štvorcov
+            let fts = 4;
+
+            let velocityX = 1;
+            let velocityY = 0;
+            
+            let score = 0;
+            
+            let gameIsRunning = true;
+
+            // game
+            function game() {
+                if (gameIsRunning) {
+                    draw();
+                    move();
+                    setTimeout(game, 1000 / fts);
+                }
+            }
+
+            apple();
+            game();
+
+            function move() {
+                snakeX += speed * velocityX;
+                snakeY += speed * velocityY;
+                
+                // wall collision
+                if (snakeX > canvas.width-tileSize)    snakeX = 0;     
+                if (snakeX < 0)                        snakeX = canvas.width;
+                if (snakeY > canvas.height-tileSize)   snakeY = 0;     
+                if (snakeY < 0)                        snakeY = canvas.height;
+                
+
+                // tail collision
+                tail.forEach((snakeTail) => {
+                    if (snakeX===snakeTail.x && snakeY===snakeTail.y) {
+                        gameOver();
+                    }}); 
+                
+                // náplň chvosta
+                tail.push({x: snakeX, y: snakeY});
+                tail = tail.slice(-1*snake);
+
+                // apple collision
+                if (snakeX===appleX && snakeY===appleY) {
+                    title.textContent = ++score;
+                    snake++;
+                    apple();
+                } 
+            }
+            
+            function draw() {
+                rectangle("#1E8449", 0, 0, canvas.width, canvas.height);    // štvorec
+                grid();                                                     // mriežka
+                circle("#D10B0B", appleX+tileSize/2, appleY+tileSize/2, tileSize/2);  // jablko
+                rectangle("#6F4E37", snakeX, snakeY, tileSize, tileSize);   // had
+                
+                tail.forEach((snakeTail) =>
+                    rectangle("#6F4E37", snakeTail.x, snakeTail.y, tileSize, tileSize));    // telo hada
+
+                    rectangle("#5C4033", snakeX, snakeY, tileSize, tileSize);   // hlava hada
+            }
+
+            function grid() {
+                for (let i = 0; i<tileX;  i++) {
+                    for (let j = 0; j<tileY; j++) {
+                        rectangle("#80DC67", tileSize*i, tileSize*j, tileSize-1, tileSize-1);
+                }}
+            } 
+
+            function rectangle(color, x, y, width, height) {
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, width, height);
+            }
+            
+            function circle(color, x, y, rad) {
+                ctx.beginPath();
+                ctx.arc(x, y, rad, 0, 2*Math.PI, false);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.closePath();
+            }
+
+            function apple() {
+                if (snake === tileX*tileY) gameOver(); // ak had zaplní celú plochu je koniec (nie je kde dať jablko)
+
+                appleX = Math.floor(Math.random()*tileX) * tileSize;
+                appleY = Math.floor(Math.random()*tileY) * tileSize;
+               
+               // jedlo na hlave hada
+               if ((appleX === snakeX) && (appleY === snakeY))  apple(); 
+
+               // jedlo na tele hada
+               if ( tail.some((snakeTail) => appleX === snakeTail.x && appleY === snakeTail.y) )  apple(); 
+            }
+
+            function gameOver() {
+                alert("Game over!");
+                gameIsRunning = false;
+            }
+
+            function keyPush(event) {
+                switch(event.key) {
+                 case "ArrowUp":
+                    if (velocityY !== 1) {
+                    velocityX = 0;
+                    velocityY = -1;}
+                    break;   
+                 case "ArrowDown":
+                 if (velocityY !== -1) {
+                    velocityX = 0;
+                    velocityY = 1;}
+                    break;   
+                 case "ArrowLeft":
+                 if (velocityX !== 1) {
+                    velocityX = -1;
+                    velocityY = 0;}
+                    break;   
+                 case "ArrowRight":
+                 if (velocityX !== -1) {
+                    velocityX = 1;
+                    velocityY = 0;}
+                    break;   
+                 default:
+                    // restart game
+                    if (!gameIsRunning) location.reload();
+                    break;
+                }
+            }
+
+        </script>
+    </body>
+</html>
